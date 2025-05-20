@@ -1,5 +1,6 @@
 import unicodedata
-def vietnamese_to_lower(name):
+def vietnamese_to_lower(name: str):
+    name = name.strip()
     # Normalize the string to decompose accented characters
     name = unicodedata.normalize('NFD', name)
     # Remove the diacritical marks (accents)

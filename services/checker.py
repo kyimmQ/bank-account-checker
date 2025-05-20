@@ -65,7 +65,7 @@ class CheckAccount:
             self._input_account(account)
             # check if no account
             if self._did_model_appear():
-                raise CheckerExceptions.CannotFoundAccount("Không tìm được account")
+                raise CheckerExceptions.CannotFoundAccount("Không tìm được account hoặc vượt limit")
 
             name_on_bank = self._get_name_on_web()
 
