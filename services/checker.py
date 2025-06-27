@@ -26,10 +26,26 @@ class CheckAccount:
         
     def _choose_bank(self):
         bank_input = self.driver.find_element(By.XPATH, BankConsts.BankXPath["bank_input"])
-        bank_input.send_keys("ngan hang quan doi")
-        sleep(1)
-        bank_input.send_keys(Keys.RETURN)
-        sleep(1)
+        bank_input.send_keys("a")
+
+        bank_scroll = self.driver.find_element(By.XPATH, BankConsts.BankXPath["bank_scroll"])
+
+        mbank_found = False
+
+        while not mbank_found:
+            try:
+                bank = bank_scroll.find_element(By.XPATH, BankConsts.BankXPath["mbbank"])
+
+                mbank_found = True
+                bank.click()
+            except:
+                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollTop + 5 * 72", bank_scroll)
+                sleep(1)
+
+        sleep(2)
+        # sleep(1)
+        # bank_input.send_keys(Keys.RETURN)
+        # sleep(1)
     
     def _input_account(self, account: str):
         account_input = self.driver.find_element(By.XPATH, BankConsts.BankXPath["account_input"])
