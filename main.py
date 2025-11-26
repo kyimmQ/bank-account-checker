@@ -5,29 +5,34 @@ import time
 if __name__ == "__main__":
     checker = CheckAccount()
     # Colunms: MÃ NV	TÊN NHÂN VIÊN HƯỞNG	SỐ TÀI KHOẢN
-    excel = ExcelService("CHECK STK T06.2025.xlsx", "Sheet1")
-    excel.prepare_wb()
-    name_col = 2  # Column index for names (TÊN NHÂN VIÊN HƯỞNG)
-    account_col = 3  # Column index for account numbers (SỐ TÀI KHOẢN)
-    curr_row = 149
+    try:
+        excel = ExcelService("ATM T10 2025 OFFICE (1).xlsx", "Sheet2")
+        excel.prepare_wb()  
+    except Exception as e:
+        print(f"File Excel: {e}")
+        exit(1)
+    name_col = 3  # Column index for names (TÊN NHÂN VIÊN HƯỞNG)
+    account_col = 4  # Column index for account numbers (SỐ TÀI KHOẢN)
+    curr_row = 1
 
-    end_row = min(curr_row + 100, excel.get_max_row + 1)  # Limit to 50 rows for testing
+    max_row = 28
+
+    end_row = min(curr_row + 150, max_row + 1)  # Limit to 50 rows for testing
 
     for row in range(curr_row + 1, end_row):
         name = excel.read_data(row=row, column=name_col)
         account = excel.read_data(row=row, column=account_col)
-        if name == account == None:
-            break
+        if name == None or account == None:
+            continue
         
         name_on_web, result = checker.perform_checking(name, account)
         print(row, name, name_on_web, result)
 
         excel.write_data(row, excel.get_max_column - 1, name_on_web)
         excel.write_data(row, excel.get_max_column, result)
-        
-        time.sleep(10)
+        excel.save()
+        time.sleep(20)
 
 
         # print(name, account)
-    excel.save()
     checker.teardown_method()
