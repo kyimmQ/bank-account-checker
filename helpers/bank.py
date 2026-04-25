@@ -16,3 +16,7 @@ def vietnamese_to_lower(name: str):
 def uppercase_to_lower(name):
     # Simply convert the uppercase name to lowercase
     return name.lower()
+
+def clean_bank_name(bank: str):
+    return ''.join(bank.lower().split())
+
