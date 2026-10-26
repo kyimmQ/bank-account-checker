@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 
 from consts import bank as BankConsts
 from exceptions import bank as CheckerExceptions
@@ -19,9 +19,9 @@ class CheckAccount:
         wait.until(
             EC.presence_of_element_located((By.CLASS_NAME, 'home-page'))  # Change 'dashboard' to an actual element ID after login
         )
-        sleep(2)
+        sleep(5)
         self.driver.get("https://vcbdigibank.vietcombank.com.vn/transfer/domestic")
-        sleep(2)
+        sleep(15)
         self._choose_bank()
         
     def _choose_bank(self):
@@ -51,24 +51,37 @@ class CheckAccount:
         account_input = self.driver.find_element(By.XPATH, BankConsts.BankXPath["account_input"])
         account_input.clear()
         sleep(5)
-        try:
-            self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal"])
-            retry_btn = self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal_retry"])
-            retry_btn.click()
-            sleep(2)
-        except: pass
+        self._handle_dialogs()
         account_input.send_keys(account)
         account_input.send_keys(Keys.RETURN)
-        sleep(5)
 
-    def _did_model_appear(self) -> bool:
-        try:
-            self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal"])
-            retry_btn = self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal_retry"])
-            retry_btn.click()
-            return True
-        except:
-            return False
+    def _handle_dialogs(self, quiet_seconds: int = 4, timeout: int = 40) -> bool:
+        # Dismiss every dialog VCB shows until none appears for `quiet_seconds`.
+        # Returns True if an error dialog ("Thử lại") was seen, i.e. the lookup failed.
+        error_seen = False
+        quiet = 0
+        deadline = time() + timeout
+        while quiet < quiet_seconds and time() < deadline:
+            sleep(1)
+            try:
+                # card-like number: "same as card number, continue?" -> Tiếp tục
+                btn = self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal_card_continue"])
+                # JS click: the button animation makes a native click flaky
+                self.driver.execute_script("arguments[0].click();", btn)
+                quiet = 0
+                continue
+            except:
+                pass
+            try:
+                # lookup error dialog -> Thử lại
+                self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal"])
+                retry_btn = self.driver.find_element(By.XPATH, BankConsts.BankXPath["modal_retry"])
+                self.driver.execute_script("arguments[0].click();", retry_btn)
+                error_seen = True
+                quiet = 0
+            except:
+                quiet += 1
+        return error_seen
         
     
     def _get_name_on_web(self) -> str:
@@ -78,9 +91,16 @@ class CheckAccount:
 
     def check_account(self, name: str, account: str) -> tuple[str, str]:
         try:
-            self._input_account(account)
-            # check if no account
-            if self._did_model_appear():
+            # card-style numbers (16+ digits) hit VCB's flaky card lookup, so retry them
+            attempts = 3 if len(account) >= 16 else 1
+            lookup_failed = True
+            for _ in range(attempts):
+                self._input_account(account)
+                lookup_failed = self._handle_dialogs()
+                if not lookup_failed:
+                    break
+            # no account, or the lookup errored every time
+            if lookup_failed:
                 raise CheckerExceptions.CannotFoundAccount("Không tìm được account hoặc vượt limit")
 
             name_on_bank = self._get_name_on_web()

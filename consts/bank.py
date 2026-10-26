@@ -5,5 +5,6 @@ BankXPath = {
     "account_input": "//vcb-input[@formcontrolname='beneAccount']//input",
     "name_input": "//vcb-input[@formcontrolname='beneAccountName']//input",
     "modal": "//vcb-modal-confirm",
-    "modal_retry": "//vcb-modal-confirm//button//div[text()='Thử lại']"
+    "modal_retry": "//vcb-modal-confirm//button//div[text()='Thử lại']",
+    "modal_card_continue": "//vcb-modal-confirm[contains(., 'giống số thẻ')]//button[contains(., 'Tiếp tục')]"
 }
